@@ -58,3 +58,12 @@ export interface HealthMetrics {
   successCount: number;
   failureCount: number;
 }
+
+export interface IntegrationManager {
+  registerIntegration(integration: Integration): Promise<void>;
+  syncData(integrationId: UUID, syncType: SyncType): Promise<SyncResult>;
+  processWebhook(webhook: WebhookPayload): Promise<void>;
+  authenticateThirdParty(provider: IntegrationProvider, credentials: Credentials): Promise<AuthToken>;
+  testConnection(integrationId: UUID): Promise<boolean>;
+  getIntegrationStatus(integrationId: UUID): Promise<IntegrationStatus>;
+}
