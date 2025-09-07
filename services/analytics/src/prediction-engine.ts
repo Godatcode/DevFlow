@@ -239,12 +239,14 @@ export class MLPredictionEngine implements PredictionEngine {
     confidence: number
   ): { optimistic: Date; realistic: Date; pessimistic: Date } {
     const baselineTime = baselinePrediction.getTime();
-    const variationFactor = (1 - confidence) * 0.5; // Higher confidence = less variation
+    const now = Date.now();
+    const timeToCompletion = baselineTime - now;
+    const variationFactor = (1 - confidence) * 0.3; // Higher confidence = less variation
     
     return {
-      optimistic: new Date(baselineTime * (1 - variationFactor)),
+      optimistic: new Date(baselineTime - timeToCompletion * variationFactor),
       realistic: baselinePrediction,
-      pessimistic: new Date(baselineTime * (1 + variationFactor * 2))
+      pessimistic: new Date(baselineTime + timeToCompletion * variationFactor * 2)
     };
   }
 
@@ -300,14 +302,14 @@ export class MLPredictionEngine implements PredictionEngine {
   }
 
   private assessDataQuality(historicalData: MetricData[]): number {
-    if (historicalData.length === 0) return 0.3;
+    if (historicalData.length === 0) return 0.2;
     
     const recentDataPoints = historicalData.filter(
       m => m.timestamp > new Date(Date.now() - 90 * 24 * 60 * 60 * 1000)
     ).length;
     
     // Score based on data recency and volume
-    return Math.min(0.9, recentDataPoints / 50); // Assume 50 data points is ideal
+    return Math.min(0.8, recentDataPoints / 30); // Assume 30 data points is ideal
   }
 
   private async getHistoricalAccuracy(projectId: UUID): Promise<number> {
