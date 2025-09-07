@@ -13,3 +13,6 @@ export * from './agent-distribution/task-distributor';
 export * from './agent-distribution/workflow-agent-coordinator';
 export * from './agent-distribution/agent-step-executor';
 export * from './agent-distribution/agent-distribution-service';
+
+// Pipeline generation exports
+export * from './pipeline';
