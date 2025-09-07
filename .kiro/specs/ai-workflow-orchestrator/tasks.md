@@ -74,9 +74,9 @@
     - Write tests for task distribution algorithms
     - _Requirements: 1.2, 1.3_
 
-- [ ] 5. Build Analytics Service
+- [-] 5. Build Analytics Service
 
-  - [ ] 5.1 Implement DORA metrics tracking
+  - [x] 5.1 Implement DORA metrics tracking
 
     - Create metrics collection system for deployment events
     - Implement lead time and recovery time calculations
@@ -84,7 +84,7 @@
     - Write tests for DORA metrics accuracy
     - _Requirements: 2.1_
 
-  - [ ] 5.2 Create predictive timeline estimation
+  - [-] 5.2 Create predictive timeline estimation
 
     - Implement machine learning models for timeline prediction
     - Create historical data analysis algorithms
