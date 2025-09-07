@@ -1,0 +1,21 @@
+{
+  "name": "@devflow/shared-config",
+  "version": "1.0.0",
+  "description": "Shared configuration and environment management",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@devflow/shared-types": "^1.0.0",
+    "@devflow/shared-utils": "^1.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0",
+    "vitest": "^1.0.0"
+  }
+}

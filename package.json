@@ -1,0 +1,35 @@
+{
+  "name": "devflow-ai",
+  "version": "1.0.0",
+  "description": "AI-powered development workflow orchestrator",
+  "private": true,
+  "workspaces": [
+    "services/*",
+    "shared/*"
+  ],
+  "scripts": {
+    "build": "npm run build:shared && npm run build:services",
+    "build:shared": "npm run build -w shared/types && npm run build -w shared/utils && npm run build -w shared/config",
+    "build:services": "npm run build -w services/api-gateway && npm run build -w services/orchestration && npm run build -w services/analytics && npm run build -w services/automation && npm run build -w services/integration",
+    "dev": "npm run dev --workspaces",
+    "test": "npm run test --workspaces",
+    "lint": "eslint . --ext .ts,.tsx",
+    "type-check": "tsc --noEmit",
+    "migrate": "ts-node scripts/migrate.ts",
+    "db:setup": "npm run migrate up && npm run migrate setup-influx",
+    "db:status": "npm run migrate status",
+    "db:validate": "npm run migrate validate"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/parser": "^6.0.0",
+    "eslint": "^8.0.0",
+    "typescript": "^5.0.0",
+    "vitest": "^1.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  }
+}

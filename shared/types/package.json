@@ -1,0 +1,17 @@
+{
+  "name": "@devflow/shared-types",
+  "version": "1.0.0",
+  "description": "Shared TypeScript types and interfaces",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0",
+    "vitest": "^1.0.0"
+  }
+}

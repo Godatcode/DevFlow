@@ -1,0 +1,49 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "node",
+    "lib": ["ES2022"],
+    "outDir": "./dist",
+    "rootDir": "./",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "composite": true,
+    "incremental": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "resolveJsonModule": true,
+    "allowSyntheticDefaultImports": true,
+    "baseUrl": ".",
+    "paths": {
+      "@devflow/shared-types": ["./shared/types/src"],
+      "@devflow/shared-utils": ["./shared/utils/src"],
+      "@devflow/shared-config": ["./shared/config/src"]
+    }
+  },
+  "include": [
+    "services/**/*",
+    "shared/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "**/*.test.ts",
+    "**/*.spec.ts"
+  ],
+  "references": [
+    { "path": "./shared/types" },
+    { "path": "./shared/utils" },
+    { "path": "./shared/config" },
+    { "path": "./services/api-gateway" },
+    { "path": "./services/orchestration" },
+    { "path": "./services/analytics" },
+    { "path": "./services/automation" },
+    { "path": "./services/integration" }
+  ]
+}
