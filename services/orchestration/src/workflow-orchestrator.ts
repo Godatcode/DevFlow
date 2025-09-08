@@ -14,20 +14,24 @@ import { WorkflowExecutionContext, StepExecutionResult, OrchestrationState } fro
 import { WorkflowStateManager } from './workflow-state-manager';
 import { WorkflowExecutionEngine } from './workflow-execution-engine';
 import { Logger } from '@devflow/shared-utils';
+import { RealtimeEventPublisher } from './realtime';
 
 export class WorkflowOrchestratorImpl implements WorkflowOrchestrator {
   private stateManager: WorkflowStateManager;
   private executionEngine: WorkflowExecutionEngine;
   private logger: Logger;
+  private realtimePublisher?: RealtimeEventPublisher;
 
   constructor(
     stateManager: WorkflowStateManager,
     executionEngine: WorkflowExecutionEngine,
-    logger: Logger
+    logger: Logger,
+    realtimePublisher?: RealtimeEventPublisher
   ) {
     this.stateManager = stateManager;
     this.executionEngine = executionEngine;
     this.logger = logger;
+    this.realtimePublisher = realtimePublisher;
   }
 
   async createWorkflow(definition: WorkflowDefinition): Promise<Workflow> {
@@ -54,7 +58,7 @@ export class WorkflowOrchestratorImpl implements WorkflowOrchestrator {
 
     try {
       // Update workflow status to active
-      await this.stateManager.updateWorkflowStatus(workflowId, WorkflowStatus.ACTIVE);
+      await this.updateWorkflowStatusWithRealtime(workflowId, WorkflowStatus.ACTIVE);
 
       // Create execution context
       const executionContext: WorkflowExecutionContext = {
@@ -78,7 +82,10 @@ export class WorkflowOrchestratorImpl implements WorkflowOrchestrator {
         ? WorkflowStatus.COMPLETED 
         : WorkflowStatus.FAILED;
       
-      await this.stateManager.updateWorkflowStatus(workflowId, finalStatus);
+      await this.updateWorkflowStatusWithRealtime(workflowId, finalStatus, {
+        duration: result.duration,
+        stepCount: result.steps.length
+      });
 
       this.logger.info('Workflow execution completed', { 
         workflowId, 
@@ -89,7 +96,13 @@ export class WorkflowOrchestratorImpl implements WorkflowOrchestrator {
       return result;
     } catch (error) {
       this.logger.error('Workflow execution failed', { workflowId, error });
-      await this.stateManager.updateWorkflowStatus(workflowId, WorkflowStatus.FAILED);
+      await this.updateWorkflowStatusWithRealtime(workflowId, WorkflowStatus.FAILED);
+      
+      // Publish error to real-time subscribers
+      if (this.realtimePublisher) {
+        await this.realtimePublisher.publishError(workflowId, (error as Error).message);
+      }
+      
       throw error;
     }
   }
@@ -106,7 +119,7 @@ export class WorkflowOrchestratorImpl implements WorkflowOrchestrator {
       throw new Error(`Cannot pause workflow in status: ${workflow.status}`);
     }
 
-    await this.stateManager.updateWorkflowStatus(workflowId, WorkflowStatus.PAUSED);
+    await this.updateWorkflowStatusWithRealtime(workflowId, WorkflowStatus.PAUSED);
     await this.executionEngine.pauseExecution(workflowId);
 
     this.logger.info('Workflow paused successfully', { workflowId });
@@ -124,7 +137,7 @@ export class WorkflowOrchestratorImpl implements WorkflowOrchestrator {
       throw new Error(`Cannot resume workflow in status: ${workflow.status}`);
     }
 
-    await this.stateManager.updateWorkflowStatus(workflowId, WorkflowStatus.ACTIVE);
+    await this.updateWorkflowStatusWithRealtime(workflowId, WorkflowStatus.ACTIVE);
     await this.executionEngine.resumeExecution(workflowId);
 
     this.logger.info('Workflow resumed successfully', { workflowId });
@@ -142,7 +155,7 @@ export class WorkflowOrchestratorImpl implements WorkflowOrchestrator {
       throw new Error(`Cannot cancel workflow in status: ${workflow.status}`);
     }
 
-    await this.stateManager.updateWorkflowStatus(workflowId, WorkflowStatus.CANCELLED);
+    await this.updateWorkflowStatusWithRealtime(workflowId, WorkflowStatus.CANCELLED);
     await this.executionEngine.cancelExecution(workflowId);
 
     this.logger.info('Workflow cancelled successfully', { workflowId });
@@ -154,6 +167,20 @@ export class WorkflowOrchestratorImpl implements WorkflowOrchestrator {
       throw new Error(`Workflow not found: ${workflowId}`);
     }
     return workflow.status;
+  }
+
+  private async updateWorkflowStatusWithRealtime(
+    workflowId: UUID, 
+    status: WorkflowStatus, 
+    metadata?: Record<string, any>
+  ): Promise<void> {
+    // Update status in state manager
+    await this.stateManager.updateWorkflowStatus(workflowId, status);
+    
+    // Publish real-time update
+    if (this.realtimePublisher) {
+      await this.realtimePublisher.publishStatusUpdate(workflowId, status, metadata);
+    }
   }
 
   private generateUUID(): UUID {
