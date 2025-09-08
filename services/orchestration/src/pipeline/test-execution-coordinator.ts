@@ -31,7 +31,9 @@ export enum TestPhaseType {
   SECURITY = 'security',
   CONTRACT = 'contract',
   SMOKE = 'smoke',
-  REGRESSION = 'regression'
+  REGRESSION = 'regression',
+  CRITICAL = 'critical',
+  COMPLIANCE = 'compliance'
 }
 
 export interface TestSuite {
@@ -91,6 +93,7 @@ export enum TestExecutionStatus {
 
 export interface TestPhaseResult {
   phaseId: UUID;
+  type: TestPhaseType;
   status: TestExecutionStatus;
   suites: TestSuiteResult[];
   duration: number;
@@ -443,7 +446,9 @@ export class TestExecutionCoordinator {
         [TestPhaseType.SECURITY]: 'zap',
         [TestPhaseType.CONTRACT]: 'pact',
         [TestPhaseType.SMOKE]: 'playwright',
-        [TestPhaseType.REGRESSION]: 'jest'
+        [TestPhaseType.REGRESSION]: 'jest',
+        [TestPhaseType.CRITICAL]: 'jest',
+        [TestPhaseType.COMPLIANCE]: 'jest'
       },
       typescript: {
         [TestPhaseType.UNIT]: 'vitest',
@@ -453,7 +458,9 @@ export class TestExecutionCoordinator {
         [TestPhaseType.SECURITY]: 'zap',
         [TestPhaseType.CONTRACT]: 'pact',
         [TestPhaseType.SMOKE]: 'playwright',
-        [TestPhaseType.REGRESSION]: 'vitest'
+        [TestPhaseType.REGRESSION]: 'vitest',
+        [TestPhaseType.CRITICAL]: 'vitest',
+        [TestPhaseType.COMPLIANCE]: 'vitest'
       },
       python: {
         [TestPhaseType.UNIT]: 'pytest',
@@ -463,7 +470,9 @@ export class TestExecutionCoordinator {
         [TestPhaseType.SECURITY]: 'bandit',
         [TestPhaseType.CONTRACT]: 'pact',
         [TestPhaseType.SMOKE]: 'pytest',
-        [TestPhaseType.REGRESSION]: 'pytest'
+        [TestPhaseType.REGRESSION]: 'pytest',
+        [TestPhaseType.CRITICAL]: 'pytest',
+        [TestPhaseType.COMPLIANCE]: 'pytest'
       }
     };
     
@@ -479,7 +488,9 @@ export class TestExecutionCoordinator {
       [TestPhaseType.SECURITY]: 1,
       [TestPhaseType.CONTRACT]: characteristics.frameworks.length,
       [TestPhaseType.SMOKE]: 1,
-      [TestPhaseType.REGRESSION]: Math.ceil(characteristics.repositorySize / 20000)
+      [TestPhaseType.REGRESSION]: Math.ceil(characteristics.repositorySize / 20000),
+      [TestPhaseType.CRITICAL]: 1,
+      [TestPhaseType.COMPLIANCE]: 1
     };
     
     return Math.max(1, Math.min(baseCount[type], 10)); // Cap at 10 suites
@@ -494,7 +505,9 @@ export class TestExecutionCoordinator {
       [TestPhaseType.SECURITY]: 180,
       [TestPhaseType.CONTRACT]: 60,
       [TestPhaseType.SMOKE]: 30,
-      [TestPhaseType.REGRESSION]: 180
+      [TestPhaseType.REGRESSION]: 180,
+      [TestPhaseType.CRITICAL]: 60,
+      [TestPhaseType.COMPLIANCE]: 120
     };
     
     const complexityMultiplier = characteristics.complexity === 'high' ? 1.5 : 
@@ -516,8 +529,8 @@ export class TestExecutionCoordinator {
   private generateSuiteTags(type: TestPhaseType, characteristics: ProjectCharacteristics): string[] {
     const tags = [type];
     
-    if (characteristics.criticality === 'high') tags.push('critical');
-    if (characteristics.complianceRequirements.length > 0) tags.push('compliance');
+    if (characteristics.criticality === 'high') tags.push(TestPhaseType.CRITICAL);
+    if (characteristics.complianceRequirements.length > 0) tags.push(TestPhaseType.COMPLIANCE);
     
     return tags;
   }
@@ -598,6 +611,7 @@ export class TestExecutionCoordinator {
       
       return {
         phaseId: phase.id,
+        type: phase.type,
         status,
         suites: suiteResults,
         duration: Date.now() - startTime,
@@ -607,6 +621,7 @@ export class TestExecutionCoordinator {
     } catch (error) {
       return {
         phaseId: phase.id,
+        type: phase.type,
         status: TestExecutionStatus.FAILED,
         suites: suiteResults,
         duration: Date.now() - startTime,

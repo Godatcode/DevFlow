@@ -101,7 +101,7 @@ export interface RateLimiterConfig {
 }
 
 export class RateLimiter {
-  private store: RateLimitStore;
+  protected store: RateLimitStore;
   private config: RateLimiterConfig;
 
   constructor(config: RateLimiterConfig) {
@@ -118,7 +118,7 @@ export class RateLimiter {
     const windowKey = `${key}:${windowStart}`;
 
     const current = await this.store.get(windowKey);
-    const count = current || 0;
+    const count = current ? parseInt(current.toString(), 10) : 0;
 
     if (count >= limitConfig.maxRequests) {
       const resetTime = new Date(windowStart + limitConfig.windowMs);
@@ -187,7 +187,7 @@ export class RateLimiter {
     const windowKey = `${key}:${windowStart}`;
 
     const current = await this.store.get(windowKey);
-    const count = current || 0;
+    const count = current ? parseInt(current.toString(), 10) : 0;
 
     return {
       allowed: count < limitConfig.maxRequests,
@@ -200,7 +200,7 @@ export class RateLimiter {
   /**
    * Generate rate limit key
    */
-  private generateKey(request: GatewayRequest, limitConfig: RateLimitConfig): string {
+  protected generateKey(request: GatewayRequest, limitConfig: RateLimitConfig): string {
     if (this.config.keyGenerator) {
       return this.config.keyGenerator(request);
     }
@@ -292,9 +292,9 @@ export class SlidingWindowRateLimiter extends RateLimiter {
     };
   }
 
-  private generateKey(request: GatewayRequest, limitConfig: RateLimitConfig): string {
+  protected generateKey(request: GatewayRequest, limitConfig: RateLimitConfig): string {
     // Use parent's key generation but add sliding window prefix
-    const baseKey = super['generateKey'](request, limitConfig);
+    const baseKey = super.generateKey(request, limitConfig);
     return `sliding:${baseKey}`;
   }
 }
@@ -364,9 +364,9 @@ export class TokenBucketRateLimiter extends RateLimiter {
     };
   }
 
-  private generateKey(request: GatewayRequest, limitConfig: RateLimitConfig): string {
+  protected generateKey(request: GatewayRequest, limitConfig: RateLimitConfig): string {
     // Use parent's key generation but add token bucket prefix
-    const baseKey = super['generateKey'](request, limitConfig);
+    const baseKey = super.generateKey(request, limitConfig);
     return `bucket:${baseKey}`;
   }
 }

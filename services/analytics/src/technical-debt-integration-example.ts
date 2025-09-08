@@ -7,7 +7,9 @@
 
 import { TechnicalDebtService, TechnicalDebtServiceConfig } from './technical-debt-service';
 import { UUID } from '@devflow/shared-types';
-import { logger } from '@devflow/shared-utils';
+import { Logger } from '@devflow/shared-utils';
+
+const logger = new Logger('TechnicalDebtIntegration');
 
 // Example configuration for the technical debt service
 const exampleConfig: TechnicalDebtServiceConfig = {

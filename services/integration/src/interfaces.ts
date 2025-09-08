@@ -1,5 +1,4 @@
-import { 
-  IntegrationManager,
+import {
   Integration,
   IntegrationProvider,
   SyncResult,

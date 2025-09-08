@@ -12,6 +12,13 @@ export * from './technical-debt-analyzer';
 export * from './technical-debt-repository';
 export * from './technical-debt-service';
 export * from './space-metrics-collector';
-export * from './space-metrics-repository';
-export * from './team-performance-service';
+export { 
+  PostgresSatisfactionRepository,
+  PostgresProductivityRepository,
+  PostgresActivityRepository,
+  PostgresCommunicationRepository,
+  PostgresEfficiencyRepository,
+  SPACEMetricsCollectorImpl
+} from './space-metrics-repository';
+export { TeamPerformanceService, RiskFactor } from './team-performance-service';
 export * from './team-performance-integration-example';

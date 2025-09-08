@@ -2,7 +2,7 @@ import { UUID } from '@devflow/shared-types';
 import { GatewayRequest, GatewayResponse } from '../types';
 import { JWTAuthenticator, JWTPayload } from './jwt-auth';
 import { RBACAuthorizer, AuthorizationContext } from './rbac';
-import { MFAManager } from './mfa';
+import { MFAManager, MFAConfig } from './mfa';
 
 export interface AuthMiddlewareConfig {
   jwt: {
@@ -12,15 +12,7 @@ export interface AuthMiddlewareConfig {
     expiresIn: string;
     refreshExpiresIn: string;
   };
-  mfa: {
-    enabled: boolean;
-    methods: Array<'totp' | 'sms' | 'email' | 'backup-codes'>;
-    gracePeriod: number;
-    backupCodes: {
-      enabled: boolean;
-      count: number;
-    };
-  };
+  mfa: MFAConfig;
   publicPaths: string[];
   skipAuthPaths: string[];
 }

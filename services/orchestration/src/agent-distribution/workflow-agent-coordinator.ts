@@ -1,6 +1,6 @@
-import { UUID, WorkflowStep, WorkflowStepType, AgentAssignment } from '@devflow/shared-types';
+import { UUID, WorkflowStep, WorkflowStepType, AgentAssignment, AgentCapability } from '@devflow/shared-types';
 import { Logger } from '@devflow/shared-utils';
-import { AgentManager, AgentCapability } from './agent-manager';
+import { AgentManager } from './agent-manager';
 import { TaskDistributor, Task, TaskPriority, TaskStatus } from './task-distributor';
 import { WorkflowExecutionContext } from '../types';
 

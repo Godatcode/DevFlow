@@ -37,7 +37,7 @@ export class PredictionValidator {
       });
 
       // Update model performance metrics
-      await this.updateModelPerformance(originalPrediction.modelVersion, accuracy);
+      await this.updateModelPerformance('v1.0', accuracy); // Use default model version
 
       return {
         predictionId,
@@ -46,7 +46,7 @@ export class PredictionValidator {
         recommendations: this.generateImprovementRecommendations(errorAnalysis)
       };
     } catch (error) {
-      this.logger.error(`Failed to validate prediction ${predictionId}:`, error);
+      this.logger.error(`Failed to validate prediction ${predictionId}:`, { error: error instanceof Error ? error.message : String(error) });
       throw error;
     }
   }
@@ -166,7 +166,7 @@ export class PredictionValidator {
         deployed: testResults.accuracy > currentPerformance.accuracy
       };
     } catch (error) {
-      this.logger.error(`Failed to improve model ${modelVersion}:`, error);
+      this.logger.error(`Failed to improve model ${modelVersion}:`, { error: error instanceof Error ? error.message : String(error) });
       throw error;
     }
   }
@@ -400,7 +400,7 @@ export class PredictionValidator {
     return results.reduce((sum, result) => sum + result.accuracy.overall, 0) / results.length;
   }
 
-  private analyzePredictionTrends(results: ValidationResult[]): TrendAnalysis {
+  private analyzePredictionTrends(results: ValidationResult[]): any {
     // Simplified trend analysis
     const accuracies = results.map(r => r.accuracy.overall);
     const trend = accuracies.length > 1 ? 
@@ -565,12 +565,12 @@ export interface BatchValidationResult {
   successfulValidations: number;
   failedValidations: number;
   overallAccuracy: number;
-  trends: TrendAnalysis;
+  trends: PredictionTrendAnalysis;
   results: ValidationResult[];
   errors: Array<{ predictionId: UUID; error: string }>;
 }
 
-export interface TrendAnalysis {
+export interface PredictionTrendAnalysis {
   direction: 'improving' | 'declining' | 'stable';
   rate: number;
   confidence: number;

@@ -12,10 +12,13 @@
   },
   "dependencies": {
     "@devflow/shared-types": "^1.0.0",
-    "@devflow/shared-utils": "^1.0.0"
+    "@devflow/shared-utils": "^1.0.0",
+    "pg": "^8.11.0",
+    "@influxdata/influxdb-client": "^1.33.0"
   },
   "devDependencies": {
     "typescript": "^5.0.0",
-    "vitest": "^1.0.0"
+    "vitest": "^1.0.0",
+    "@types/pg": "^8.10.0"
   }
 }

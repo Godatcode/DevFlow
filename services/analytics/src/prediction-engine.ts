@@ -26,7 +26,7 @@ export class MLPredictionEngine implements PredictionEngine {
       this.logger.info(`Timeline prediction completed for project ${projectId}`);
       return prediction;
     } catch (error) {
-      this.logger.error(`Failed to predict timeline for project ${projectId}:`, error);
+      this.logger.error(`Failed to predict timeline for project ${projectId}:`, { error: error instanceof Error ? error.message : String(error) });
       throw error;
     }
   }

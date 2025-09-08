@@ -79,7 +79,7 @@ export class AutomationService extends EventEmitter implements AutomationEngine 
     } catch (error) {
       this.logger.error('Failed to register agent', { 
         agentId: agent.id, 
-        error: error.message 
+        error: error instanceof Error ? error.message : String(error)
       });
       throw error;
     }
@@ -102,7 +102,7 @@ export class AutomationService extends EventEmitter implements AutomationEngine 
     } catch (error) {
       this.logger.error('Failed to unregister agent', { 
         agentId, 
-        error: error.message 
+        error: error instanceof Error ? error.message : String(error)
       });
       throw error;
     }
@@ -150,13 +150,13 @@ export class AutomationService extends EventEmitter implements AutomationEngine 
       this.logger.error('Agent execution failed', { 
         agentId, 
         workflowId: context.workflowId,
-        error: error.message 
+        error: error instanceof Error ? error.message : String(error)
       });
       
       this.emit('agent:execution:failed', { 
         agentId, 
         workflowId: context.workflowId,
-        error: error.message 
+        error: error instanceof Error ? error.message : String(error)
       });
       
       throw error;
@@ -180,12 +180,12 @@ export class AutomationService extends EventEmitter implements AutomationEngine 
     } catch (error) {
       this.logger.error('Hook execution failed', { 
         hookId, 
-        error: error.message 
+        error: error instanceof Error ? error.message : String(error)
       });
       
       this.emit('hook:execution:failed', { 
         hookId, 
-        error: error.message 
+        error: error instanceof Error ? error.message : String(error)
       });
       
       throw error;
@@ -209,7 +209,7 @@ export class AutomationService extends EventEmitter implements AutomationEngine 
     } catch (error) {
       this.logger.error('Failed to schedule task', { 
         taskId: task.id, 
-        error: error.message 
+        error: error instanceof Error ? error.message : String(error)
       });
       throw error;
     }
@@ -227,7 +227,7 @@ export class AutomationService extends EventEmitter implements AutomationEngine 
     } catch (error) {
       this.logger.error('Failed to get agent performance metrics', { 
         agentId, 
-        error: error.message 
+        error: error instanceof Error ? error.message : String(error)
       });
       throw error;
     }
@@ -254,7 +254,7 @@ export class AutomationService extends EventEmitter implements AutomationEngine 
     } catch (error) {
       this.logger.error('Failed to discover agents', { 
         capabilities, 
-        error: error.message 
+        error: error instanceof Error ? error.message : String(error)
       });
       throw error;
     }
@@ -268,7 +268,7 @@ export class AutomationService extends EventEmitter implements AutomationEngine 
     } catch (error) {
       this.logger.error('Failed to get agent health', { 
         agentId, 
-        error: error.message 
+        error: error instanceof Error ? error.message : String(error)
       });
       throw error;
     }
@@ -287,7 +287,7 @@ export class AutomationService extends EventEmitter implements AutomationEngine 
     } catch (error) {
       this.logger.error('Failed to restart agent', { 
         agentId, 
-        error: error.message 
+        error: error instanceof Error ? error.message : String(error)
       });
       throw error;
     }
@@ -318,7 +318,7 @@ export class AutomationService extends EventEmitter implements AutomationEngine 
       this.restartAgent(data.agentId).catch(error => {
         this.logger.error('Failed to auto-restart unhealthy agent', { 
           agentId: data.agentId, 
-          error: error.message 
+          error: error instanceof Error ? error.message : String(error)
         });
       });
     });
@@ -362,7 +362,7 @@ export class AutomationService extends EventEmitter implements AutomationEngine 
       
     } catch (error) {
       this.logger.error('Error during automation service shutdown', { 
-        error: error.message 
+        error: error instanceof Error ? error.message : String(error)
       });
       throw error;
     }

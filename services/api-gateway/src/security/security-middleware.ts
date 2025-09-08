@@ -1,6 +1,7 @@
 import { GatewayRequest, GatewayResponse } from '../types';
 import { SecurityPolicy, SecurityRule } from '../interfaces';
-import { RateLimiter, RateLimitResult, RateLimitConfig } from './rate-limiter';
+import { RateLimiter, RateLimitResult, RateLimiterConfig } from './rate-limiter';
+import { RateLimitConfig } from '../interfaces';
 
 export interface SecurityMiddlewareConfig {
   rateLimiter: RateLimiter;

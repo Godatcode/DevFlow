@@ -179,7 +179,7 @@ export class AzureAdapter implements IntegrationAdapter {
       throw new Error(`Azure OAuth authentication failed: ${response.statusText}`);
     }
 
-    const data = await response.json();
+    const data = await response.json() as any;
     
     if (data.error) {
       throw new Error(`Azure OAuth authentication failed: ${data.error_description}`);

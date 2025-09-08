@@ -4,6 +4,7 @@ import {
   WorkflowStepType,
   WorkflowResult,
   WorkflowStepResult,
+  WorkflowStatus,
   Status,
   UUID,
   RetryConfig
@@ -99,7 +100,7 @@ export class WorkflowExecutionEngine {
             
             return {
               workflowId,
-              status: Status.FAILED,
+              status: WorkflowStatus.FAILED,
               steps: stepResults,
               duration: Date.now() - startTime,
               error: retryResult.error
@@ -130,7 +131,7 @@ export class WorkflowExecutionEngine {
           
           return {
             workflowId,
-            status: Status.FAILED,
+            status: WorkflowStatus.FAILED,
             steps: stepResults,
             duration: Date.now() - startTime,
             error: finalStepResult.error
@@ -153,7 +154,7 @@ export class WorkflowExecutionEngine {
       if (this.pausedExecutions.has(workflowId)) {
         return {
           workflowId,
-          status: Status.PENDING, // Use PENDING for paused state
+          status: WorkflowStatus.PAUSED, // Use PAUSED for paused state
           steps: stepResults,
           duration: Date.now() - startTime
         };
@@ -166,7 +167,7 @@ export class WorkflowExecutionEngine {
 
       return {
         workflowId,
-        status: Status.COMPLETED,
+        status: WorkflowStatus.COMPLETED,
         steps: stepResults,
         duration: Date.now() - startTime
       };
@@ -176,7 +177,7 @@ export class WorkflowExecutionEngine {
       
       return {
         workflowId,
-        status: Status.FAILED,
+        status: WorkflowStatus.FAILED,
         steps: stepResults,
         duration: Date.now() - startTime,
         error: error instanceof Error ? error.message : 'Unknown error'

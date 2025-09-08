@@ -44,7 +44,7 @@ export class TimelinePredictionService {
       this.logger.info(`Timeline prediction completed for project ${projectId}`);
       return enhancedPrediction;
     } catch (error) {
-      this.logger.error(`Failed to predict timeline for project ${projectId}:`, error);
+      this.logger.error(`Failed to predict timeline for project ${projectId}:`, { error: error instanceof Error ? error.message : String(error) });
       throw error;
     }
   }
@@ -74,7 +74,7 @@ export class TimelinePredictionService {
 
       this.logger.info(`Prediction validation completed for ${predictionId}`);
     } catch (error) {
-      this.logger.error(`Failed to validate prediction ${predictionId}:`, error);
+      this.logger.error(`Failed to validate prediction ${predictionId}:`, { error: error instanceof Error ? error.message : String(error) });
       throw error;
     }
   }
@@ -110,7 +110,7 @@ export class TimelinePredictionService {
       this.logger.info('Prediction analytics generated successfully');
       return analytics;
     } catch (error) {
-      this.logger.error('Failed to generate prediction analytics:', error);
+      this.logger.error('Failed to generate prediction analytics:', { error: error instanceof Error ? error.message : String(error) });
       throw error;
     }
   }
@@ -143,7 +143,7 @@ export class TimelinePredictionService {
         insights: this.generateHistoricalInsights(velocityAnalysis, deploymentAnalysis)
       };
     } catch (error) {
-      this.logger.error(`Failed to analyze historical trends for project ${projectId}:`, error);
+      this.logger.error(`Failed to analyze historical trends for project ${projectId}:`, { error: error instanceof Error ? error.message : String(error) });
       throw error;
     }
   }
@@ -168,7 +168,7 @@ export class TimelinePredictionService {
 
       return adjustedPrediction;
     } catch (error) {
-      this.logger.warn('Failed to enhance prediction with historical insights, using base prediction:', error);
+      this.logger.warn('Failed to enhance prediction with historical insights, using base prediction:', { error: error instanceof Error ? error.message : String(error) });
       return prediction;
     }
   }
@@ -220,7 +220,7 @@ export class TimelinePredictionService {
 
       this.logger.info(`Model improvement triggered with strategy: ${strategy.type}`);
     } catch (error) {
-      this.logger.error('Failed to trigger model improvement:', error);
+      this.logger.error('Failed to trigger model improvement:', { error: error instanceof Error ? error.message : String(error) });
     }
   }
 

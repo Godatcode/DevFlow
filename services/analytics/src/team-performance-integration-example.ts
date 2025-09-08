@@ -7,13 +7,13 @@
 
 import { 
   SPACEMetricsCollectorImpl,
-  TeamPerformanceServiceImpl,
   PostgresSatisfactionRepository,
   PostgresProductivityRepository,
   PostgresActivityRepository,
   PostgresCommunicationRepository,
   PostgresEfficiencyRepository
 } from './space-metrics-repository';
+import { TeamPerformanceServiceImpl } from './team-performance-service';
 import { DateRange } from './interfaces';
 import { UUID } from '@devflow/shared-types';
 
@@ -74,14 +74,14 @@ export class TeamPerformanceIntegrationExample {
       console.log(`  Efficiency: ${insights.spaceMetrics.efficiency}/100\n`);
 
       console.log('📈 Performance Trends:');
-      Object.entries(insights.trends).forEach(([metric, trend]) => {
+      Object.entries(insights.trends).forEach(([metric, trend]: [string, any]) => {
         const arrow = trend.direction === 'up' ? '↗️' : trend.direction === 'down' ? '↘️' : '➡️';
         console.log(`  ${metric}: ${trend.current} ${arrow} (${trend.change > 0 ? '+' : ''}${trend.change}%)`);
       });
       console.log();
 
       console.log('💡 Recommendations:');
-      insights.recommendations.forEach((rec, index) => {
+      insights.recommendations.forEach((rec: any, index: number) => {
         const priorityEmoji = rec.priority === 'critical' ? '🚨' : rec.priority === 'high' ? '⚠️' : '💡';
         console.log(`  ${index + 1}. ${priorityEmoji} ${rec.title} (${rec.priority})`);
         console.log(`     ${rec.description}`);
@@ -90,7 +90,7 @@ export class TeamPerformanceIntegrationExample {
       });
 
       console.log('⚠️ Risk Factors:');
-      insights.riskFactors.forEach((risk, index) => {
+      insights.riskFactors.forEach((risk: any, index: number) => {
         const severityEmoji = risk.severity === 'critical' ? '🚨' : risk.severity === 'high' ? '⚠️' : '⚡';
         console.log(`  ${index + 1}. ${severityEmoji} ${risk.name} (${risk.severity})`);
         console.log(`     Impact: ${risk.impact}`);
@@ -129,25 +129,25 @@ export class TeamPerformanceIntegrationExample {
       console.log(`  Efficiency: ${profile.spaceMetrics.efficiency}/100\n`);
 
       console.log('💪 Strengths:');
-      profile.strengths.forEach((strength, index) => {
+      profile.strengths.forEach((strength: any, index: number) => {
         console.log(`  ${index + 1}. ${strength}`);
       });
       console.log();
 
       console.log('🎯 Improvement Areas:');
-      profile.improvementAreas.forEach((area, index) => {
+      profile.improvementAreas.forEach((area: any, index: number) => {
         console.log(`  ${index + 1}. ${area}`);
       });
       console.log();
 
       console.log('🚀 Career Growth Path:');
-      profile.careerGrowthPath.forEach((path, index) => {
+      profile.careerGrowthPath.forEach((path: any, index: number) => {
         console.log(`  ${index + 1}. ${path}`);
       });
       console.log();
 
       console.log('🤝 Mentorship Needs:');
-      profile.mentorshipNeeds.forEach((need, index) => {
+      profile.mentorshipNeeds.forEach((need: any, index: number) => {
         console.log(`  ${index + 1}. ${need}`);
       });
       console.log();
@@ -183,7 +183,7 @@ export class TeamPerformanceIntegrationExample {
       console.log('📊 Performance Trends Analysis:');
       console.log('─'.repeat(50));
 
-      Object.entries(trends).forEach(([metric, trend]) => {
+      Object.entries(trends).forEach(([metric, trend]: [string, any]) => {
         const arrow = trend.direction === 'up' ? '↗️' : trend.direction === 'down' ? '↘️' : '➡️';
         const trendEmoji = trend.trend === 'improving' ? '📈' : trend.trend === 'declining' ? '📉' : '📊';
         

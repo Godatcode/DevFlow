@@ -187,10 +187,10 @@ export interface RollbackStepResult {
   output: string;
   error?: string;
   retryCount: number;
-  validationResults: ValidationResult[];
+  validationResults: DisasterRecoveryValidationResult[];
 }
 
-export interface ValidationResult {
+export interface DisasterRecoveryValidationResult {
   checkId: UUID;
   status: 'passed' | 'failed' | 'skipped';
   result: any;
@@ -645,8 +645,8 @@ export class IntelligentDisasterRecoverySystem implements DisasterRecoverySystem
     return `Executed commands: ${commands.join(', ')}`;
   }
 
-  private async runValidationChecks(checks: ValidationCheck[]): Promise<ValidationResult[]> {
-    const results: ValidationResult[] = [];
+  private async runValidationChecks(checks: ValidationCheck[]): Promise<DisasterRecoveryValidationResult[]> {
+    const results: DisasterRecoveryValidationResult[] = [];
 
     for (const check of checks) {
       const startTime = Date.now();

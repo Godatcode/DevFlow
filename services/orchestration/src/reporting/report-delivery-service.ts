@@ -1,4 +1,6 @@
-import { logger } from '@devflow/shared-utils';
+import { Logger } from '@devflow/shared-utils';
+
+const logger = new Logger('report-delivery-service');
 import {
   ReportDeliveryService,
   GeneratedReport,

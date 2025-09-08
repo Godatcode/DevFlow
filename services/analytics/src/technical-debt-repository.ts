@@ -1,8 +1,11 @@
-import { Pool } from 'pg';
+
 import { UUID, TechnicalDebtAnalysis } from '@devflow/shared-types';
-import { DatabaseConnection } from '@devflow/shared-config';
-import { logger } from '@devflow/shared-utils';
-import { DebtTrend, DebtItem } from './technical-debt-analyzer';
+import { PostgreSQLConnection } from '@devflow/shared-config';
+import { Logger } from '@devflow/shared-utils';
+
+const logger = new Logger('TechnicalDebtRepository');
+import { DebtItem } from './technical-debt-analyzer';
+import { DebtTrend } from './interfaces';
 
 export interface TechnicalDebtRecord {
   id: UUID;
@@ -32,10 +35,10 @@ export interface DebtItemRecord {
 }
 
 export class TechnicalDebtRepository {
-  private db: Pool;
+  private db: PostgreSQLConnection;
 
   constructor() {
-    this.db = DatabaseConnection.getPool();
+    this.db = PostgreSQLConnection.getInstance();
   }
 
   async saveTechnicalDebtAnalysis(
@@ -43,7 +46,7 @@ export class TechnicalDebtRepository {
     analysis: TechnicalDebtAnalysis,
     debtItems: DebtItem[]
   ): Promise<UUID> {
-    const client = await this.db.connect();
+    const client = await this.db.getClient();
     
     try {
       await client.query('BEGIN');
@@ -138,13 +141,13 @@ export class TechnicalDebtRepository {
         params = [projectId];
       }
 
-      const result = await this.db.query(query, params);
+      const rows = await this.db.query<TechnicalDebtRecord>(query, params);
       
-      if (result.rows.length === 0) {
+      if (rows.length === 0) {
         return null;
       }
 
-      const record = result.rows[0] as TechnicalDebtRecord;
+      const record = rows[0];
       
       return {
         totalDebtHours: record.total_debt_hours,
@@ -173,9 +176,9 @@ export class TechnicalDebtRepository {
       const startDate = new Date();
       startDate.setDate(startDate.getDate() - days);
 
-      const result = await this.db.query(query, [projectId, startDate]);
+      const rows = await this.db.query<any>(query, [projectId, startDate]);
       
-      return result.rows.map(row => ({
+      return rows.map((row: any) => ({
         date: row.analysis_date,
         totalDebt: row.total_debt_hours,
         newDebt: 0, // Would need additional tracking
@@ -216,9 +219,9 @@ export class TechnicalDebtRepository {
         params = [projectId];
       }
 
-      const result = await this.db.query(query, params);
+      const rows = await this.db.query<any>(query, params);
       
-      return result.rows.map(row => ({
+      return rows.map((row: any) => ({
         type: row.type as DebtItem['type'],
         severity: row.severity as DebtItem['severity'],
         file: row.file_path,
@@ -244,11 +247,11 @@ export class TechnicalDebtRepository {
         ORDER BY project_id, analysis_date DESC
       `;
 
-      const result = await this.db.query(query, [projectIds]);
+      const rows = await this.db.query<any>(query, [projectIds]);
       
       const summary = new Map<UUID, { totalDebt: number; criticalIssues: number }>();
       
-      result.rows.forEach(row => {
+      rows.forEach((row: any) => {
         summary.set(row.project_id, {
           totalDebt: row.total_debt_hours,
           criticalIssues: row.critical_issues

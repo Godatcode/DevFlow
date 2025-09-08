@@ -209,7 +209,7 @@ export class StyleEnforcerAgent implements AIAgent {
 
       this.logger.error('Style enforcement failed', { 
         executionId,
-        error: error.message,
+        error: error instanceof Error ? error.message : String(error),
         duration 
       });
 
@@ -225,7 +225,7 @@ export class StyleEnforcerAgent implements AIAgent {
             fixesApplied: 0,
             styleScore: 0
           },
-          error: error.message
+          error: error instanceof Error ? error.message : String(error)
         },
         duration,
         startTime,
@@ -377,9 +377,9 @@ export class StyleEnforcerAgent implements AIAgent {
       formattingRules.push(
         {
           id: 'css-property-order',
-          pattern: /display:\s*[^;]+;\s*position:/g,
+          pattern: new RegExp('display:\\s*[^;]+;\\s*position:', 'g'),
           category: StyleCategory.STRUCTURE,
-          severity: 'info' as const,
+          severity: 'warning' as const,
           message: 'Consider ordering CSS properties consistently',
           fixable: false,
           suggestion: 'Order properties: positioning, box model, typography, visual, misc'

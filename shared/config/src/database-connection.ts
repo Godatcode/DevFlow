@@ -51,15 +51,15 @@ export class PostgreSQLConnection {
   }
 
   private setupEventHandlers(): void {
-    this.pool.on('error', (err) => {
+    this.pool.on('error', (err: Error) => {
       console.error('PostgreSQL pool error:', err);
     });
 
-    this.pool.on('connect', (client) => {
+    this.pool.on('connect', (client: PoolClient) => {
       console.log('PostgreSQL client connected');
     });
 
-    this.pool.on('remove', (client) => {
+    this.pool.on('remove', (client: PoolClient) => {
       console.log('PostgreSQL client removed');
     });
   }
@@ -81,6 +81,21 @@ export class PostgreSQLConnection {
     try {
       const result = await client.query(text, params);
       return result.rows;
+    } catch (error) {
+      throw new DatabaseConnectionError(
+        `PostgreSQL query failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        'POSTGRES_QUERY_ERROR'
+      );
+    } finally {
+      client.release();
+    }
+  }
+
+  async queryResult<T = any>(text: string, params?: any[]): Promise<{ rows: T[]; rowCount: number }> {
+    const client = await this.getClient();
+    try {
+      const result = await client.query(text, params);
+      return { rows: result.rows, rowCount: result.rowCount || 0 };
     } catch (error) {
       throw new DatabaseConnectionError(
         `PostgreSQL query failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
@@ -245,11 +260,11 @@ export class InfluxDBConnection {
       
       return new Promise((resolve, reject) => {
         this.queryApi.queryRows(fluxQuery, {
-          next: (row, tableMeta) => {
+          next: (row: string[], tableMeta: any) => {
             const record = tableMeta.toObject(row) as T;
             results.push(record);
           },
-          error: (error) => {
+          error: (error: Error) => {
             reject(new DatabaseConnectionError(
               `InfluxDB query failed: ${error.message}`,
               'INFLUXDB_QUERY_ERROR'

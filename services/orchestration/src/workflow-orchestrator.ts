@@ -78,7 +78,7 @@ export class WorkflowOrchestratorImpl implements WorkflowOrchestrator {
       const result = await this.executionEngine.execute(workflowId, executionContext);
 
       // Update final status
-      const finalStatus = result.status === Status.COMPLETED 
+      const finalStatus = result.status === WorkflowStatus.COMPLETED 
         ? WorkflowStatus.COMPLETED 
         : WorkflowStatus.FAILED;
       

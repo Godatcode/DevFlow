@@ -230,7 +230,7 @@ export class PerformanceOptimizerAgent implements AIAgent {
 
       this.logger.error('Performance analysis failed', { 
         executionId,
-        error: error.message,
+        error: error instanceof Error ? error.message : String(error),
         duration 
       });
 
@@ -246,7 +246,7 @@ export class PerformanceOptimizerAgent implements AIAgent {
             optimizationsGenerated: 0,
             performanceScore: 0
           },
-          error: error.message
+          error: error instanceof Error ? error.message : String(error)
         },
         duration,
         startTime,

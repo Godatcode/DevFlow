@@ -5,7 +5,8 @@ import {
   TestCoverage,
   TestPhaseResult,
   TestSuiteResult,
-  TestResult
+  TestResult,
+  TestPhaseType
 } from './test-execution-coordinator';
 
 export interface TestAnalysisReport {
@@ -595,11 +596,11 @@ export class TestResultAnalyzer {
   }
 
   private shouldRecommendAdditionalTestTypes(result: TestExecutionResult): boolean {
-    const phaseTypes = result.phases.map(phase => phase.suites[0]?.framework || '');
+    const phaseTypes = result.phases.map(phase => phase.type);
     
     // Recommend if missing common test types
-    const hasE2E = phaseTypes.some(type => ['playwright', 'selenium', 'cypress'].includes(type));
-    const hasPerformance = phaseTypes.some(type => ['k6', 'locust', 'jmeter'].includes(type));
+    const hasE2E = phaseTypes.includes(TestPhaseType.E2E);
+    const hasPerformance = phaseTypes.includes(TestPhaseType.PERFORMANCE);
     
     return !hasE2E || !hasPerformance;
   }

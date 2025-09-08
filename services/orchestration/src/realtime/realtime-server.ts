@@ -1,7 +1,9 @@
 import { WebSocketServer, WebSocket } from 'ws';
 import { v4 as uuidv4 } from 'uuid';
 import { UUID } from '@devflow/shared-types';
-import { logger } from '@devflow/shared-utils';
+import { Logger } from '@devflow/shared-utils';
+
+const logger = new Logger('realtime-server');
 import { 
   RealtimeServer, 
   RealtimeClient, 
@@ -26,7 +28,7 @@ export class WebSocketRealtimeServer implements RealtimeServer {
   async start(port: number): Promise<void> {
     this.wss = new WebSocketServer({ port });
 
-    this.wss.on('connection', (socket: WebSocket, request) => {
+    this.wss.on('connection', (socket: WebSocket, request: any) => {
       this.handleConnection(socket, request);
     });
 
@@ -80,7 +82,7 @@ export class WebSocketRealtimeServer implements RealtimeServer {
       this.handleDisconnection(clientId);
     });
 
-    socket.on('error', (error) => {
+    socket.on('error', (error: any) => {
       logger.error('WebSocket error', { clientId, error: error.message });
       this.handleDisconnection(clientId);
     });

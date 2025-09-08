@@ -75,7 +75,7 @@ export class RequestRouter {
       });
 
       // Prepare headers
-      const headers = {
+      const headers: Record<string, string> = {
         ...request.headers,
         'X-Request-ID': request.context.requestId,
         'X-Forwarded-For': request.context.ipAddress,

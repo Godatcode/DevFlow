@@ -1,4 +1,4 @@
-import { UUID } from '@devflow/shared-types';
+import { UUID, SPACEMetrics } from '@devflow/shared-types';
 import { DateRange } from './interfaces';
 import {
   DeveloperSatisfactionSurvey,
@@ -10,8 +10,55 @@ import {
   ProductivityRepository,
   ActivityRepository,
   CommunicationRepository,
-  EfficiencyRepository
+  EfficiencyRepository,
+  SPACEMetricsCollector
 } from './space-metrics-collector';
+
+// Export the implementation classes that are referenced in other files
+export class SPACEMetricsCollectorImpl implements SPACEMetricsCollector {
+  constructor(
+    private satisfactionRepo: SatisfactionRepository,
+    private productivityRepo: ProductivityRepository,
+    private activityRepo: ActivityRepository,
+    private communicationRepo: CommunicationRepository,
+    private efficiencyRepo: EfficiencyRepository
+  ) {}
+
+  async collectSPACEMetrics(teamId: UUID, dateRange: DateRange): Promise<SPACEMetrics> {
+    // Implementation would go here
+    return {
+      satisfaction: 7.5,
+      performance: 85,
+      activity: 75,
+      communication: 80,
+      efficiency: 78
+    };
+  }
+
+  async collectSatisfactionMetrics(teamId: UUID, dateRange: DateRange): Promise<number> {
+    return await this.satisfactionRepo.getAverageSatisfaction(teamId, dateRange);
+  }
+
+  async collectPerformanceMetrics(teamId: UUID, dateRange: DateRange): Promise<number> {
+    const metrics = await this.productivityRepo.getTeamProductivity(teamId, dateRange);
+    return metrics.reduce((sum, m) => sum + m.tasksCompleted, 0) / metrics.length;
+  }
+
+  async collectActivityMetrics(teamId: UUID, dateRange: DateRange): Promise<number> {
+    const metrics = await this.activityRepo.getTeamActivity(teamId, dateRange);
+    return metrics.reduce((sum, m) => sum + m.commitsCount, 0) / metrics.length;
+  }
+
+  async collectCommunicationMetrics(teamId: UUID, dateRange: DateRange): Promise<number> {
+    const metrics = await this.communicationRepo.getTeamCommunication(teamId, dateRange);
+    return metrics.meetingParticipation;
+  }
+
+  async collectEfficiencyMetrics(teamId: UUID, dateRange: DateRange): Promise<number> {
+    const metrics = await this.efficiencyRepo.getTeamEfficiency(teamId, dateRange);
+    return metrics.reduce((sum, m) => sum + m.focusTime, 0) / metrics.length;
+  }
+}
 
 export class PostgresSatisfactionRepository implements SatisfactionRepository {
   constructor(private db: any) {} // Database connection

@@ -10,11 +10,17 @@ export enum AgentType {
 
 export enum AgentCapability {
   VULNERABILITY_SCANNING = 'vulnerability_scanning',
+  SECURITY_SCANNING = 'security_scanning',
   CODE_ANALYSIS = 'code_analysis',
+  CODE_REVIEW = 'code_review',
   PERFORMANCE_MONITORING = 'performance_monitoring',
+  PERFORMANCE_OPTIMIZATION = 'performance_optimization',
   CODE_FORMATTING = 'code_formatting',
   TEST_GENERATION = 'test_generation',
-  DOCUMENTATION_GENERATION = 'documentation_generation'
+  DOCUMENTATION_GENERATION = 'documentation_generation',
+  DOCUMENTATION = 'documentation',
+  DEPLOYMENT = 'deployment',
+  MONITORING = 'monitoring'
 }
 
 export enum ExecutionStatus {

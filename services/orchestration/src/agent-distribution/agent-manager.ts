@@ -1,22 +1,13 @@
-import { UUID } from '@devflow/shared-types';
+import { UUID, AgentCapability } from '@devflow/shared-types';
 import { Logger } from '@devflow/shared-utils';
+
+export { AgentCapability };
 
 export enum AgentStatus {
   AVAILABLE = 'available',
   BUSY = 'busy',
   OFFLINE = 'offline',
   MAINTENANCE = 'maintenance'
-}
-
-export enum AgentCapability {
-  SECURITY_SCANNING = 'security_scanning',
-  PERFORMANCE_OPTIMIZATION = 'performance_optimization',
-  CODE_FORMATTING = 'code_formatting',
-  TEST_GENERATION = 'test_generation',
-  DOCUMENTATION = 'documentation',
-  CODE_REVIEW = 'code_review',
-  DEPLOYMENT = 'deployment',
-  MONITORING = 'monitoring'
 }
 
 export interface Agent {

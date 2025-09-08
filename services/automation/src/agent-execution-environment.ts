@@ -156,13 +156,13 @@ export class AgentExecutionEnvironment extends EventEmitter {
       this.emit('execution:failed', { 
         environmentId, 
         agentId: agent.id, 
-        error: error.message 
+        error: error instanceof Error ? error.message : String(error)
       });
       
       this.logger.error('Agent execution failed in environment', { 
         environmentId, 
         agentId: agent.id, 
-        error: error.message 
+        error: error instanceof Error ? error.message : String(error)
       });
       
       throw error;
@@ -268,9 +268,9 @@ export class AgentExecutionEnvironment extends EventEmitter {
     } catch (error) {
       // Enhance error with environment context
       const enhancedError = new Error(
-        `Agent execution failed in environment ${environment.id}: ${error.message}`
+        `Agent execution failed in environment ${environment.id}: ${error instanceof Error ? error.message : String(error)}`
       );
-      enhancedError.stack = error.stack;
+      enhancedError.stack = error instanceof Error ? error.stack : undefined;
       throw enhancedError;
     }
   }

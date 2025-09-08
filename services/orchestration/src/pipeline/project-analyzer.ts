@@ -14,7 +14,7 @@ export class IntelligentProjectAnalyzer implements ProjectAnalyzer {
     
     // Analyze codebase for each repository
     const codebaseAnalyses = await Promise.all(
-      project.repositories.map(repo => this.analyzeCodebase(repo.url))
+      project.repositories.map((repo: any) => this.analyzeCodebase(repo.url))
     );
     
     // Aggregate analysis results
@@ -42,7 +42,7 @@ export class IntelligentProjectAnalyzer implements ProjectAnalyzer {
   async getProjectComplexity(projectId: UUID): Promise<'low' | 'medium' | 'high'> {
     const project = await this.getProjectData(projectId);
     const codebaseAnalyses = await Promise.all(
-      project.repositories.map(repo => this.analyzeCodebase(repo.url))
+      project.repositories.map((repo: any) => this.analyzeCodebase(repo.url))
     );
     
     let complexityScore = 0;
@@ -50,20 +50,20 @@ export class IntelligentProjectAnalyzer implements ProjectAnalyzer {
     // Factor in number of languages
     const uniqueLanguages = new Set();
     codebaseAnalyses.forEach(analysis => {
-      analysis.languages.forEach(lang => uniqueLanguages.add(lang.language));
+      analysis.languages.forEach((lang: any) => uniqueLanguages.add(lang.language));
     });
     complexityScore += uniqueLanguages.size * 2;
     
     // Factor in number of frameworks
     const uniqueFrameworks = new Set();
     codebaseAnalyses.forEach(analysis => {
-      analysis.frameworks.forEach(fw => uniqueFrameworks.add(fw.framework));
+      analysis.frameworks.forEach((fw: any) => uniqueFrameworks.add(fw.framework));
     });
     complexityScore += uniqueFrameworks.size * 1.5;
     
     // Factor in codebase size
     const totalLinesOfCode = codebaseAnalyses.reduce((sum, analysis) => 
-      sum + analysis.languages.reduce((langSum, lang) => langSum + lang.linesOfCode, 0), 0
+      sum + analysis.languages.reduce((langSum: number, lang: any) => langSum + lang.linesOfCode, 0), 0
     );
     
     if (totalLinesOfCode > 100000) complexityScore += 10;

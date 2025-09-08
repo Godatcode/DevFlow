@@ -1,5 +1,7 @@
 import { UUID, WorkflowStatus } from '@devflow/shared-types';
-import { logger } from '@devflow/shared-utils';
+import { Logger } from '@devflow/shared-utils';
+
+const logger = new Logger('realtime-event-publisher');
 import { 
   RealtimeEventPublisher, 
   RealtimeServer, 

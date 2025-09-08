@@ -5,14 +5,14 @@ import {
 } from '@devflow/shared-types';
 import { WorkflowExecutionContext } from '../types';
 import { WorkflowStateRepository } from '../workflow-state-manager';
-import { DatabaseConnection } from '@devflow/shared-config';
+import { PostgreSQLConnection } from '@devflow/shared-config';
 import { Logger } from '@devflow/shared-utils';
 
 export class PostgresWorkflowRepository implements WorkflowStateRepository {
-  private db: DatabaseConnection;
+  private db: PostgreSQLConnection;
   private logger: Logger;
 
-  constructor(db: DatabaseConnection, logger: Logger) {
+  constructor(db: PostgreSQLConnection, logger: Logger) {
     this.db = db;
     this.logger = logger;
   }
@@ -63,7 +63,7 @@ export class PostgresWorkflowRepository implements WorkflowStateRepository {
     `;
 
     try {
-      const result = await this.db.query(query, [workflowId]);
+      const result = await this.db.queryResult(query, [workflowId]);
       
       if (result.rows.length === 0) {
         return null;
@@ -96,7 +96,7 @@ export class PostgresWorkflowRepository implements WorkflowStateRepository {
     `;
 
     try {
-      const result = await this.db.query(query, [status, new Date(), workflowId]);
+      const result = await this.db.queryResult(query, [status, new Date(), workflowId]);
       
       if (result.rowCount === 0) {
         throw new Error(`Workflow not found: ${workflowId}`);
@@ -119,9 +119,9 @@ export class PostgresWorkflowRepository implements WorkflowStateRepository {
     `;
 
     try {
-      const result = await this.db.query(query, [status]);
+      const result = await this.db.queryResult(query, [status]);
       
-      return result.rows.map(row => ({
+      return result.rows.map((row: any) => ({
         id: row.id,
         definitionId: row.definition_id,
         status: row.status as WorkflowStatus,
@@ -183,7 +183,7 @@ export class PostgresWorkflowRepository implements WorkflowStateRepository {
     `;
 
     try {
-      const result = await this.db.query(query, [workflowId]);
+      const result = await this.db.queryResult(query, [workflowId]);
       
       if (result.rows.length === 0) {
         return null;
@@ -221,7 +221,7 @@ export class PostgresWorkflowRepository implements WorkflowStateRepository {
     ];
 
     try {
-      const result = await this.db.query(query, values);
+      const result = await this.db.queryResult(query, values);
       
       if (result.rowCount === 0) {
         throw new Error(`Execution context not found: ${context.workflowId}`);

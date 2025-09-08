@@ -170,7 +170,7 @@ export class SecurityGuardianAgent implements AIAgent {
 
       this.logger.error('Security scan failed', { 
         executionId,
-        error: error.message,
+        error: error instanceof Error ? error.message : String(error),
         duration 
       });
 
@@ -185,7 +185,7 @@ export class SecurityGuardianAgent implements AIAgent {
             vulnerabilitiesFound: 0,
             securityScore: 0
           },
-          error: error.message
+          error: error instanceof Error ? error.message : String(error)
         },
         duration,
         startTime,

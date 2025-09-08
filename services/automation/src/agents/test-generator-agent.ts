@@ -219,7 +219,7 @@ export class TestGeneratorAgent implements AIAgent {
 
       this.logger.error('Test generation failed', { 
         executionId,
-        error: error.message,
+        error: error instanceof Error ? error.message : String(error),
         duration 
       });
 
@@ -235,7 +235,7 @@ export class TestGeneratorAgent implements AIAgent {
             coverageImprovement: 0,
             averageConfidence: 0
           },
-          error: error.message
+          error: error instanceof Error ? error.message : String(error)
         },
         duration,
         startTime,
@@ -320,7 +320,7 @@ export class TestGeneratorAgent implements AIAgent {
     
     // Regular function declarations
     const functionRegex = /function\s+(\w+)\s*\(([^)]*)\)\s*{/g;
-    let match;
+    let match: RegExpExecArray | null;
     while ((match = functionRegex.exec(codeContent)) !== null) {
       functions.push({
         name: match[1],
@@ -348,7 +348,7 @@ export class TestGeneratorAgent implements AIAgent {
     // Method definitions in classes
     const methodRegex = /(\w+)\s*\([^)]*\)\s*{/g;
     while ((match = methodRegex.exec(codeContent)) !== null) {
-      if (!functions.some(f => f.name === match[1])) {
+      if (match && match[1] && !functions.some(f => f.name === match![1])) {
         functions.push({
           name: match[1],
           parameters: [],
@@ -1018,7 +1018,7 @@ ${rec.examples.after}
   }
 
   private getScenarioDescription(scenario: string): string {
-    const descriptions = {
+    const descriptions: Record<string, string> = {
       'happy_path': 'work correctly with valid input',
       'empty_input': 'handle empty input',
       'null_input': 'handle null input',

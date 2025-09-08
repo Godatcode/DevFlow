@@ -1,5 +1,7 @@
 import { UUID, TechnicalDebtAnalysis } from '@devflow/shared-types';
-import { logger } from '@devflow/shared-utils';
+import { Logger } from '@devflow/shared-utils';
+
+const logger = new Logger('TechnicalDebtService');
 import { TechnicalDebtAnalyzerService, DebtItem } from './technical-debt-analyzer';
 import { TechnicalDebtRepository } from './technical-debt-repository';
 import { DebtTrend } from './interfaces';
@@ -65,7 +67,7 @@ export class TechnicalDebtService {
 
     } catch (error) {
       logger.error('Technical debt analysis failed', { projectId, error });
-      throw new Error(`Failed to analyze technical debt for project ${projectId}: ${error.message}`);
+      throw new Error(`Failed to analyze technical debt for project ${projectId}: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 
@@ -125,7 +127,7 @@ export class TechnicalDebtService {
       const summary = await this.repository.getProjectDebtSummary(projectIds);
 
       // Analyze trends for each project
-      const trends = { improving: [], degrading: [], stable: [] };
+      const trends: { improving: string[], degrading: string[], stable: string[] } = { improving: [], degrading: [], stable: [] };
       const recommendations: string[] = [];
 
       for (const projectId of projectIds) {
