@@ -1,11 +1,10 @@
 import { UUID, WorkflowStatus } from '@devflow/shared-types';
-import { WebSocket } from 'ws';
 
 export interface RealtimeClient {
   id: UUID;
   userId: UUID;
   teamId: UUID;
-  socket: WebSocket;
+  socket: any; // Generic socket type to support both WebSocket and Socket.IO
   subscriptions: Set<string>;
   lastActivity: Date;
 }

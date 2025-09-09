@@ -46,10 +46,18 @@ export interface SecurityRule {
 
 export interface APIGatewayConfig {
   routes: RouteDefinition[];
-  authProviders: AuthProvider[];
-  rateLimits: RateLimitConfig[];
-  securityPolicies: SecurityPolicy[];
+  authProviders?: AuthProvider[];
+  rateLimits?: RateLimitConfig[];
+  securityPolicies?: SecurityPolicy[];
   loadBalancing: LoadBalancingConfig;
+  rateLimit?: RateLimitConfig;
+  cors?: {
+    enabled: boolean;
+    origins: string[];
+  };
+  security?: {
+    enabled: boolean;
+  };
 }
 
 export interface LoadBalancingConfig {

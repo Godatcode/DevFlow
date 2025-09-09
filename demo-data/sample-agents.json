@@ -1,0 +1,36 @@
+{
+  "agents": [
+    {
+      "id": "code-reviewer",
+      "name": "AI Code Reviewer",
+      "type": "analysis",
+      "status": "active",
+      "capabilities": ["code-review", "security-analysis", "best-practices"],
+      "performance": {"success_rate": 94, "avg_response_time": 45}
+    },
+    {
+      "id": "test-runner",
+      "name": "Automated Test Runner",
+      "type": "testing",
+      "status": "active",
+      "capabilities": ["unit-tests", "integration-tests", "performance-tests"],
+      "performance": {"success_rate": 98, "avg_response_time": 120}
+    },
+    {
+      "id": "deployer",
+      "name": "Deployment Agent",
+      "type": "deployment",
+      "status": "active",
+      "capabilities": ["staging-deploy", "production-deploy", "rollback"],
+      "performance": {"success_rate": 96, "avg_response_time": 180}
+    },
+    {
+      "id": "security-scanner",
+      "name": "Security Scanner",
+      "type": "security",
+      "status": "active",
+      "capabilities": ["vulnerability-scan", "compliance-check", "threat-analysis"],
+      "performance": {"success_rate": 92, "avg_response_time": 90}
+    }
+  ]
+}

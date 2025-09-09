@@ -3,4 +3,7 @@ export * from './validation';
 export * from './errors';
 export * from './logger';
 export * from './crypto';
+export * from './encryption';
+export * from './key-management';
+export * from './tls-config';
 export * from './date-utils';

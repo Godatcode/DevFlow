@@ -2,11 +2,12 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import { MonitoringService } from '@devflow/monitoring';
-import { GatewayService } from './gateway-service.js';
-import { AuthMiddleware } from './auth/auth-middleware.js';
-import { SecurityMiddleware } from './security/security-middleware.js';
-import { RateLimiter } from './security/rate-limiter.js';
+import { GatewayService, GatewayServiceConfig } from './gateway-service.js';
+import { AuthMiddleware, AuthMiddlewareConfig } from './auth/auth-middleware.js';
+import { SecurityMiddleware, SecurityMiddlewareConfig } from './security/security-middleware.js';
+import { RateLimiter, RateLimiterConfig, MemoryRateLimitStore } from './security/rate-limiter.js';
 import { LoadBalancer } from './load-balancing/load-balancer.js';
+import { APIGatewayConfig, LoadBalancingConfig, RateLimitConfig } from './interfaces.js';
 
 export interface MonitoringGatewayConfig {
   port: number;
@@ -46,15 +47,119 @@ export class MonitoringGatewayService {
     });
 
     // Initialize other services
-    this.gatewayService = new GatewayService();
-    this.authMiddleware = new AuthMiddleware(config.jwtSecret);
-    this.securityMiddleware = new SecurityMiddleware();
-    this.rateLimiter = new RateLimiter({
-      windowMs: config.rateLimitWindowMs,
-      maxRequests: config.rateLimitMaxRequests,
-      redisUrl: config.redisUrl
-    });
-    this.loadBalancer = new LoadBalancer();
+    const apiGatewayConfig: APIGatewayConfig = {
+      routes: [],
+      loadBalancing: {
+        strategy: 'round-robin',
+        healthCheck: {
+          enabled: true,
+          interval: 30000,
+          timeout: 5000,
+          path: '/health'
+        }
+      },
+      rateLimit: {
+        windowMs: config.rateLimitWindowMs,
+        maxRequests: config.rateLimitMaxRequests
+      },
+      cors: {
+        enabled: true,
+        origins: config.corsOrigins
+      },
+      security: {
+        enabled: true
+      }
+    };
+
+    const gatewayServiceConfig: GatewayServiceConfig = {
+      port: config.port,
+      host: '0.0.0.0',
+      requestTimeout: 30000,
+      maxRetries: 3,
+      retryDelay: 1000
+    };
+
+    this.gatewayService = new GatewayService(apiGatewayConfig, gatewayServiceConfig);
+
+    const authConfig: AuthMiddlewareConfig = {
+      jwt: {
+        secret: config.jwtSecret,
+        issuer: 'devflow-ai',
+        audience: 'devflow-api',
+        expiresIn: '1h',
+        refreshExpiresIn: '7d'
+      },
+      mfa: {
+        enabled: false,
+        methods: [],
+        gracePeriod: 300,
+        backupCodes: {
+          enabled: false,
+          count: 10
+        }
+      },
+      publicPaths: ['/health', '/metrics'],
+      skipAuthPaths: ['/health', '/metrics']
+    };
+
+    this.authMiddleware = new AuthMiddleware(authConfig);
+
+    const rateLimiterConfig: RateLimiterConfig = {
+      store: new MemoryRateLimitStore()
+    };
+
+    this.rateLimiter = new RateLimiter(rateLimiterConfig);
+
+    const securityConfig: SecurityMiddlewareConfig = {
+      rateLimiter: this.rateLimiter,
+      defaultRateLimit: {
+        windowMs: config.rateLimitWindowMs,
+        maxRequests: config.rateLimitMaxRequests
+      },
+      cors: {
+        enabled: true,
+        origin: config.corsOrigins,
+        methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+        allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+        exposedHeaders: [],
+        credentials: true,
+        maxAge: 86400,
+        preflightContinue: false
+      },
+      security: {
+        contentSecurityPolicy: "default-src 'self'",
+        xFrameOptions: 'DENY',
+        xContentTypeOptions: true,
+        referrerPolicy: 'strict-origin-when-cross-origin',
+        permissionsPolicy: 'geolocation=(), microphone=(), camera=()',
+        strictTransportSecurity: {
+          enabled: true,
+          maxAge: 31536000,
+          includeSubDomains: true,
+          preload: true
+        }
+      },
+      validation: {
+        maxBodySize: 10 * 1024 * 1024, // 10MB
+        allowedContentTypes: ['application/json', 'application/x-www-form-urlencoded'],
+        sanitizeInput: true,
+        validateHeaders: true
+      }
+    };
+
+    this.securityMiddleware = new SecurityMiddleware(securityConfig);
+
+    const loadBalancingConfig: LoadBalancingConfig = {
+      strategy: 'round-robin',
+      healthCheck: {
+        enabled: true,
+        interval: 30000,
+        timeout: 5000,
+        path: '/health'
+      }
+    };
+
+    this.loadBalancer = new LoadBalancer(loadBalancingConfig);
 
     this.setupMiddleware();
     this.setupRoutes();
@@ -76,11 +181,31 @@ export class MonitoringGatewayService {
     // Monitoring middleware (should be early in the chain)
     this.app.use(this.monitoringService.getHttpMetricsMiddleware());
 
-    // Rate limiting
-    this.app.use(this.rateLimiter.getMiddleware());
+    // Rate limiting and security middleware
+    this.app.use(async (req, res, next) => {
+      try {
+        const gatewayRequest = this.convertToGatewayRequest(req);
+        const securityResult = await this.securityMiddleware.processRequest(gatewayRequest);
+        
+        if (!securityResult.allowed) {
+          if (securityResult.response) {
+            return res.status(securityResult.response.statusCode)
+              .set(securityResult.response.headers)
+              .json(securityResult.response.body);
+          }
+          return res.status(403).json({ error: 'Security check failed' });
+        }
 
-    // Security middleware
-    this.app.use(this.securityMiddleware.getMiddleware());
+        // Add security headers
+        if (securityResult.headers) {
+          res.set(securityResult.headers);
+        }
+
+        next();
+      } catch (error) {
+        next(error);
+      }
+    });
 
     // Body parsing
     this.app.use(express.json({ limit: '10mb' }));
@@ -120,7 +245,29 @@ export class MonitoringGatewayService {
     });
 
     // API routes with authentication
-    this.app.use('/api/v1', this.authMiddleware.getMiddleware());
+    this.app.use('/api/v1', async (req, res, next) => {
+      try {
+        const gatewayRequest = this.convertToGatewayRequest(req);
+        const authResult = await this.authMiddleware.processAuthentication(gatewayRequest);
+        
+        if (!authResult.success) {
+          if (authResult.response) {
+            return res.status(authResult.response.statusCode)
+              .set(authResult.response.headers)
+              .json(authResult.response.body);
+          }
+          return res.status(401).json({ error: 'Authentication failed' });
+        }
+
+        // Add user info to request
+        (req as any).user = authResult.request.user;
+        (req as any).isAuthenticated = authResult.request.isAuthenticated;
+
+        next();
+      } catch (error) {
+        next(error);
+      }
+    });
     
     // Orchestration service routes
     this.app.use('/api/v1/workflows', this.createProxyRoute('orchestration'));
@@ -169,7 +316,7 @@ export class MonitoringGatewayService {
         const startTime = Date.now();
         
         // Get service instance from load balancer
-        const serviceInstance = await this.loadBalancer.getHealthyInstance(serviceName);
+        const serviceInstance = this.loadBalancer.selectEndpoint();
         
         if (!serviceInstance) {
           this.monitoringService.recordMetric('service_unavailable_total', 1, 'counter', {
@@ -366,6 +513,30 @@ export class MonitoringGatewayService {
       console.error('Error stopping gateway service:', error);
       throw error;
     }
+  }
+
+  /**
+   * Convert Express request to GatewayRequest format
+   */
+  private convertToGatewayRequest(req: express.Request): any {
+    return {
+      id: req.headers['x-request-id'] || `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      method: req.method,
+      path: req.path,
+      query: req.query,
+      headers: req.headers,
+      body: req.body,
+      context: {
+        requestId: req.headers['x-request-id'] || `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        userId: req.headers['x-user-id'] as string,
+        teamId: req.headers['x-team-id'] as string,
+        route: req.route?.path || req.path,
+        method: req.method,
+        ipAddress: req.ip || req.connection.remoteAddress || '127.0.0.1',
+        userAgent: req.headers['user-agent'] || '',
+        timestamp: new Date()
+      }
+    };
   }
 
   /**

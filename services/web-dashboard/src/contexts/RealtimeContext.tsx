@@ -32,7 +32,7 @@ export function RealtimeProvider({ children }: RealtimeProviderProps) {
 
   useEffect(() => {
     if (isAuthenticated && user) {
-      const newSocket = io(import.meta.env.VITE_WEBSOCKET_URL || 'ws://localhost:8080', {
+      const newSocket = io(import.meta.env.VITE_WEBSOCKET_URL || 'http://localhost:8080', {
         auth: {
           token: localStorage.getItem('auth_token'),
         },
@@ -50,6 +50,18 @@ export function RealtimeProvider({ children }: RealtimeProviderProps) {
 
       newSocket.on('error', (error) => {
         console.error('Realtime connection error:', error);
+      });
+
+      newSocket.on('connection_established', (data) => {
+        console.log('Connection established:', data);
+      });
+
+      newSocket.on('status_update', (data) => {
+        console.log('Workflow status update:', data);
+      });
+
+      newSocket.on('progress_update', (data) => {
+        console.log('Workflow progress update:', data);
       });
 
       setSocket(newSocket);

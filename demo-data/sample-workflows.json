@@ -1,0 +1,31 @@
+{
+  "workflows": [
+    {
+      "id": "ci-cd-pipeline",
+      "name": "CI/CD Pipeline",
+      "description": "Automated build, test, and deployment workflow",
+      "status": "active",
+      "steps": [
+        {"name": "Code Review", "agent": "code-reviewer", "duration": 300},
+        {"name": "Unit Tests", "agent": "test-runner", "duration": 180},
+        {"name": "Security Scan", "agent": "security-scanner", "duration": 120},
+        {"name": "Deploy to Staging", "agent": "deployer", "duration": 240},
+        {"name": "Integration Tests", "agent": "test-runner", "duration": 360},
+        {"name": "Deploy to Production", "agent": "deployer", "duration": 180}
+      ]
+    },
+    {
+      "id": "feature-development",
+      "name": "Feature Development",
+      "description": "End-to-end feature development workflow",
+      "status": "active",
+      "steps": [
+        {"name": "Requirements Analysis", "agent": "analyst", "duration": 600},
+        {"name": "Design Review", "agent": "architect", "duration": 480},
+        {"name": "Code Generation", "agent": "code-generator", "duration": 720},
+        {"name": "Code Review", "agent": "code-reviewer", "duration": 300},
+        {"name": "Testing", "agent": "test-runner", "duration": 420}
+      ]
+    }
+  ]
+}

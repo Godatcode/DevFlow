@@ -1,4 +1,5 @@
-import { WebSocketServer, WebSocket } from 'ws';
+import { Server as SocketIOServer, Socket } from 'socket.io';
+import { createServer, Server as HTTPServer } from 'http';
 import { v4 as uuidv4 } from 'uuid';
 import { UUID } from '@devflow/shared-types';
 import { Logger } from '@devflow/shared-utils';
@@ -13,11 +14,12 @@ import {
   RealtimeMessage,
   SubscriptionMessage,
   SubscriptionManager
-} from './interfaces';
-import { InMemorySubscriptionManager } from './subscription-manager';
+} from './interfaces.js';
+import { InMemorySubscriptionManager } from './subscription-manager.js';
 
 export class WebSocketRealtimeServer implements RealtimeServer {
-  private wss: WebSocketServer | null = null;
+  private io: SocketIOServer | null = null;
+  private httpServer: HTTPServer | null = null;
   private clients = new Map<UUID, RealtimeClient>();
   private subscriptionManager: SubscriptionManager;
 
@@ -26,40 +28,68 @@ export class WebSocketRealtimeServer implements RealtimeServer {
   }
 
   async start(port: number): Promise<void> {
-    this.wss = new WebSocketServer({ port });
-
-    this.wss.on('connection', (socket: WebSocket, request: any) => {
-      this.handleConnection(socket, request);
+    this.httpServer = createServer();
+    this.io = new SocketIOServer(this.httpServer, {
+      cors: {
+        origin: ["http://localhost:3000", "http://localhost:5173"], // Add your frontend URLs
+        methods: ["GET", "POST"],
+        credentials: true
+      },
+      transports: ['websocket', 'polling']
     });
 
-    logger.info(`WebSocket server started on port ${port}`);
+    this.io.on('connection', (socket: Socket) => {
+      this.handleConnection(socket);
+    });
+
+    await new Promise<void>((resolve, reject) => {
+      this.httpServer!.listen(port, (err?: Error) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve();
+        }
+      });
+    });
+
+    logger.info(`Socket.IO server started on port ${port}`);
   }
 
   async stop(): Promise<void> {
-    if (this.wss) {
+    if (this.io) {
       // Close all client connections
       for (const client of this.clients.values()) {
-        client.socket.close();
+        (client.socket as any).disconnect();
       }
       
       // Close the server
-      this.wss.close();
-      this.wss = null;
-      
-      logger.info('WebSocket server stopped');
+      this.io.close();
+      this.io = null;
     }
+
+    if (this.httpServer) {
+      await new Promise<void>((resolve) => {
+        this.httpServer!.close(() => {
+          resolve();
+        });
+      });
+      this.httpServer = null;
+    }
+      
+    logger.info('Socket.IO server stopped');
   }
 
-  private handleConnection(socket: WebSocket, request: any): void {
+  private handleConnection(socket: Socket): void {
     const clientId = uuidv4() as UUID;
     
-    // Extract user and team info from query parameters or headers
-    const url = new URL(request.url || '', 'http://localhost');
-    const userId = url.searchParams.get('userId') as UUID;
-    const teamId = url.searchParams.get('teamId') as UUID;
+    // Extract user and team info from auth token or handshake
+    const auth = socket.handshake.auth;
+    const userId = auth.userId as UUID || socket.handshake.query.userId as UUID;
+    const teamId = auth.teamId as UUID || socket.handshake.query.teamId as UUID;
 
     if (!userId || !teamId) {
-      socket.close(1008, 'Missing userId or teamId');
+      socket.disconnect();
+      logger.warn('Client connection rejected: Missing userId or teamId', { socketId: socket.id });
       return;
     }
 
@@ -67,97 +97,90 @@ export class WebSocketRealtimeServer implements RealtimeServer {
       id: clientId,
       userId,
       teamId,
-      socket,
+      socket: socket as any, // Type compatibility
       subscriptions: new Set(),
       lastActivity: new Date()
     };
 
     this.clients.set(clientId, client);
 
-    socket.on('message', (data: Buffer) => {
-      this.handleMessage(clientId, data);
+    // Join user-specific room
+    socket.join(`user:${userId}`);
+    socket.join(`team:${teamId}`);
+
+    socket.on('subscribe', (data: any) => {
+      this.handleSubscription(clientId, data);
     });
 
-    socket.on('close', () => {
+    socket.on('unsubscribe', (data: any) => {
+      this.handleUnsubscription(clientId, data);
+    });
+
+    socket.on('disconnect', () => {
       this.handleDisconnection(clientId);
     });
 
     socket.on('error', (error: any) => {
-      logger.error('WebSocket error', { clientId, error: error.message });
+      logger.error('Socket.IO error', { clientId, error: error.message });
       this.handleDisconnection(clientId);
     });
 
     // Send connection confirmation
-    this.sendToClient(clientId, {
-      type: 'connection_established',
+    socket.emit('connection_established', {
       clientId,
       timestamp: new Date()
     });
 
-    logger.info('Client connected', { clientId, userId, teamId });
+    logger.info('Client connected', { clientId, userId, teamId, socketId: socket.id });
   }
 
-  private async handleMessage(clientId: UUID, data: Buffer): Promise<void> {
-    try {
-      const message: RealtimeMessage = JSON.parse(data.toString());
-      const client = this.clients.get(clientId);
-      
-      if (!client) {
-        return;
-      }
 
-      client.lastActivity = new Date();
 
-      switch (message.type) {
-        case 'subscribe':
-          await this.handleSubscription(clientId, message);
-          break;
-        case 'unsubscribe':
-          await this.handleUnsubscription(clientId, message);
-          break;
-        default:
-          logger.warn('Unknown message type', { clientId, type: message.type });
-      }
-    } catch (error) {
-      logger.error('Error handling message', { clientId, error: (error as Error).message });
-    }
-  }
-
-  private async handleSubscription(clientId: UUID, message: SubscriptionMessage): Promise<void> {
+  private async handleSubscription(clientId: UUID, data: any): Promise<void> {
     const client = this.clients.get(clientId);
     if (!client) return;
 
-    await this.subscriptionManager.subscribe(clientId, message.workflowId);
-    client.subscriptions.add(message.workflowId);
+    const workflowId = data.workflowId as UUID;
+    if (!workflowId) return;
 
-    this.sendToClient(clientId, {
-      type: 'subscription_confirmed',
-      workflowId: message.workflowId,
+    await this.subscriptionManager.subscribe(clientId, workflowId);
+    client.subscriptions.add(workflowId);
+
+    // Join workflow-specific room
+    (client.socket as any).join(`workflow:${workflowId}`);
+
+    (client.socket as any).emit('subscription_confirmed', {
+      workflowId,
       timestamp: new Date()
     });
 
     logger.info('Client subscribed to workflow', { 
       clientId, 
-      workflowId: message.workflowId 
+      workflowId 
     });
   }
 
-  private async handleUnsubscription(clientId: UUID, message: SubscriptionMessage): Promise<void> {
+  private async handleUnsubscription(clientId: UUID, data: any): Promise<void> {
     const client = this.clients.get(clientId);
     if (!client) return;
 
-    await this.subscriptionManager.unsubscribe(clientId, message.workflowId);
-    client.subscriptions.delete(message.workflowId);
+    const workflowId = data.workflowId as UUID;
+    if (!workflowId) return;
 
-    this.sendToClient(clientId, {
-      type: 'unsubscription_confirmed',
-      workflowId: message.workflowId,
+    await this.subscriptionManager.unsubscribe(clientId, workflowId);
+    client.subscriptions.delete(workflowId);
+
+    // Leave workflow-specific room
+    (client.socket as any).leave(`workflow:${workflowId}`);
+
+    (client.socket as any).emit('unsubscription_confirmed', {
+      workflowId,
       timestamp: new Date()
     });
 
     logger.info('Client unsubscribed from workflow', { 
       clientId, 
-      workflowId: message.workflowId 
+      workflowId 
     });
   }
 
@@ -175,12 +198,12 @@ export class WebSocketRealtimeServer implements RealtimeServer {
   }
 
   async broadcastStatusUpdate(update: StatusUpdateMessage): Promise<void> {
-    const subscribers = await this.subscriptionManager.getSubscribers(update.workflowId);
-    
-    for (const clientId of subscribers) {
-      this.sendToClient(clientId, update);
-    }
+    if (!this.io) return;
 
+    // Broadcast to workflow room
+    this.io.to(`workflow:${update.workflowId}`).emit('status_update', update);
+
+    const subscribers = await this.subscriptionManager.getSubscribers(update.workflowId);
     logger.info('Broadcasted status update', { 
       workflowId: update.workflowId, 
       status: update.status,
@@ -189,12 +212,12 @@ export class WebSocketRealtimeServer implements RealtimeServer {
   }
 
   async broadcastProgressUpdate(update: ProgressUpdateMessage): Promise<void> {
-    const subscribers = await this.subscriptionManager.getSubscribers(update.workflowId);
-    
-    for (const clientId of subscribers) {
-      this.sendToClient(clientId, update);
-    }
+    if (!this.io) return;
 
+    // Broadcast to workflow room
+    this.io.to(`workflow:${update.workflowId}`).emit('progress_update', update);
+
+    const subscribers = await this.subscriptionManager.getSubscribers(update.workflowId);
     logger.info('Broadcasted progress update', { 
       workflowId: update.workflowId, 
       progress: update.progress,
@@ -203,12 +226,12 @@ export class WebSocketRealtimeServer implements RealtimeServer {
   }
 
   async broadcastError(error: ErrorMessage): Promise<void> {
-    const subscribers = await this.subscriptionManager.getSubscribers(error.workflowId);
-    
-    for (const clientId of subscribers) {
-      this.sendToClient(clientId, error);
-    }
+    if (!this.io) return;
 
+    // Broadcast to workflow room
+    this.io.to(`workflow:${error.workflowId}`).emit('error', error);
+
+    const subscribers = await this.subscriptionManager.getSubscribers(error.workflowId);
     logger.info('Broadcasted error', { 
       workflowId: error.workflowId, 
       error: error.error,
@@ -218,12 +241,12 @@ export class WebSocketRealtimeServer implements RealtimeServer {
 
   private sendToClient(clientId: UUID, message: any): void {
     const client = this.clients.get(clientId);
-    if (!client || client.socket.readyState !== WebSocket.OPEN) {
+    if (!client) {
       return;
     }
 
     try {
-      client.socket.send(JSON.stringify(message));
+      (client.socket as any).emit('message', message);
     } catch (error) {
       logger.error('Error sending message to client', { 
         clientId, 
