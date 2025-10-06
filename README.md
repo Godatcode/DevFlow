@@ -1,4 +1,4 @@
-# DevFlow.ai - AI-Powered Development Workflow Orchestrator
+# DevFlow.ai - AI-Powered Development WorkFlow Orchestrator
 
 DevFlow.ai is an enterprise-grade AI-powered development workflow orchestrator designed to transform how development teams plan, build, and deploy software. The platform leverages intelligent automation, predictive analytics, and seamless integrations to eliminate repetitive tasks and accelerate development cycles while maintaining code quality and security standards.
 
